@@ -1,255 +1,186 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>For You ❤️</title>
+import React, { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;1,300;1,400;1,600&display=swap" rel="stylesheet">
+export default function ValentineApp() {
+  const [noPosition, setNoPosition] = useState({ x: 0, y: 0 });
+  const [typedText, setTypedText] = useState("");
+  const [showLove, setShowLove] = useState(false);
+  const containerRef = useRef(null);
+  const audioRef = useRef(null);
 
-  <style>
-    * {
-      font-family: 'Poppins', sans-serif;
-      font-style: italic;
-      box-sizing: border-box;
+  const fullText = "Anjali, will you be my valentine?";
+
+  /* Typing Effect */
+  useEffect(() => {
+    let i = 0;
+    const interval = setInterval(() => {
+      setTypedText(fullText.slice(0, i + 1));
+      i++;
+      if (i >= fullText.length) clearInterval(interval);
+    }, 60);
+    return () => clearInterval(interval);
+  }, []);
+
+  /* Background Romantic Music */
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = 0.4;
+      audioRef.current.play().catch(() => {});
     }
+  }, []);
 
-    body {
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      background: linear-gradient(135deg, #ff758c, #ffb199, #ffd6e0);
-      background-size: 300% 300%;
-      animation: gradientShift 12s ease infinite;
-    }
+  /* Move NO Away From Cursor / Touch */
+  const moveNoButton = (e) => {
+    if (!containerRef.current) return;
 
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    const rect = containerRef.current.getBoundingClientRect();
 
-    .container {
-      position: relative;
-      max-width: 500px;
-      width: 90%;
-    }
+    const cursorX = e.touches ? e.touches[0].clientX : e.clientX;
+    const cursorY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    h1 {
-      color: white;
-      font-size: 2.6rem;
-      margin-bottom: 40px;
-      text-shadow: 0 8px 30px rgba(0,0,0,0.35);
-    }
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
 
-    .btn {
-      position: fixed;
-      border: none;
-      cursor: pointer;
-      color: white;
-      font-weight: 600;
-      letter-spacing: 1px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      backdrop-filter: blur(6px);
-      z-index: 10;
-      touch-action: manipulation;
-    }
+    const dx = centerX - cursorX;
+    const dy = centerY - cursorY;
 
-    .btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
-    }
+    const factor = 0.25;
 
-    /* YES below text */
-    .yes {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #ff2e63, #ff6b8a);
-      font-size: 1.6rem;
-      left: calc(50% - 75px);
-      top: 55%; /* moved further below text to avoid overlap */
-    }
+    let newX = noPosition.x + dx * factor;
+    let newY = noPosition.y + dy * factor;
 
-    .no {
-      width: 85px;
-      height: 85px;
-      border-radius: 50%;
-      background: linear-gradient(145deg, #6c757d, #9aa3aa);
-      font-size: 1rem;
-      left: calc(50% - 40px);
-      top: 65%;
-    }
+    const limitX = rect.width / 2 - 60;
+    const limitY = rect.height / 2 - 40;
 
-    .love-message {
-      display: none;
-      font-size: 3.2rem;
-      color: white;
-      text-shadow: 0 10px 40px rgba(0,0,0,0.45);
-      margin-top: 40px;
-      z-index: 5;
-    }
+    newX = Math.max(-limitX, Math.min(limitX, newX));
+    newY = Math.max(-limitY, Math.min(limitY, newY));
 
-    .heart {
-      position: fixed;
-      font-size: 24px;
-      animation: floatUp 3s linear forwards;
-      pointer-events: none;
-    }
+    setNoPosition({ x: newX, y: newY });
+  };
 
-    @keyframes floatUp {
-      from {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-      }
-      to {
-        transform: translateY(-200px) scale(1.6);
-        opacity: 0;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1 id="question">Anjali, will you be my Valentine? 💖</h1>
+  const handleYesClick = () => {
+    setShowLove(true);
+    if (audioRef.current) audioRef.current.currentTime = 0;
+  };
 
-    <button class="btn yes" id="yesBtn">YES</button>
-    <button class="btn no" id="noBtn">NO</button>
+  return (
+    <div
+      ref={containerRef}
+      className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-pink-200 via-rose-200 to-red-300 px-6 py-10 text-center overflow-hidden relative"
+    >
+      {/* Romantic Background Music */}
+      <audio
+        ref={audioRef}
+        loop
+        src="https://cdn.pixabay.com/audio/2022/03/15/audio_c8c8a73467.mp3"
+      />
 
-    <div class="love-message" id="loveMsg"></div>
-  </div>
+      {/* Floating Hearts Background */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {Array.from({ length: 25 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute text-red-400 opacity-70"
+            initial={{
+              y: "110%",
+              x: Math.random() * window.innerWidth,
+              scale: 0.6 + Math.random(),
+            }}
+            animate={{ y: "-10%" }}
+            transition={{
+              duration: 8 + Math.random() * 6,
+              repeat: Infinity,
+              delay: Math.random() * 5,
+            }}
+            style={{ fontSize: 20 + Math.random() * 30 }}
+          >
+            ❤️
+          </motion.div>
+        ))}
+      </div>
 
-  <audio id="bgMusic" loop>
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b4d4c7c7b.mp3?filename=romantic-piano-110623.mp3" type="audio/mp3">
-  </audio>
+      {/* TEXT */}
+      <motion.h1
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="italic font-semibold text-gray-800 leading-tight max-w-md w-full z-10"
+        style={{ fontSize: "clamp(26px, 6vw, 42px)" }}
+      >
+        {typedText}
+      </motion.h1>
 
-  <audio id="yesSound">
-    <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3?filename=romantic-love-110613.mp3" type="audio/mp3">
-  </audio>
+      {/* YES BUTTON */}
+      <div className="w-full flex justify-center mt-12 z-20">
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.05 }}
+          onClick={handleYesClick}
+          className="italic bg-red-500 text-white font-semibold rounded-full shadow-2xl"
+          style={{
+            padding: "clamp(16px, 4vw, 24px) clamp(34px, 7vw, 48px)",
+            fontSize: "clamp(20px, 4.5vw, 24px)",
+          }}
+        >
+          Yes
+        </motion.button>
+      </div>
 
-  <script>
-    const noBtn = document.getElementById("noBtn");
-    const yesBtn = document.getElementById("yesBtn");
-    const loveMsg = document.getElementById("loveMsg");
-    const question = document.getElementById("question");
-    const bgMusic = document.getElementById("bgMusic");
-    const yesSound = document.getElementById("yesSound");
+      {/* NO BUTTON AREA */}
+      <div className="relative w-full max-w-md h-44 mt-10 z-20">
+        <motion.button
+          animate={{ x: noPosition.x, y: noPosition.y }}
+          transition={{ type: "spring", stiffness: 260 }}
+          onMouseMove={moveNoButton}
+          onTouchMove={moveNoButton}
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 italic bg-gray-500 text-white font-semibold rounded-full shadow-xl"
+          style={{
+            padding: "clamp(12px, 3vw, 18px) clamp(24px, 5vw, 34px)",
+            fontSize: "clamp(16px, 4vw, 20px)",
+          }}
+        >
+          No
+        </motion.button>
+      </div>
 
-    let musicStarted = false;
+      {/* LOVE SCREEN */}
+      {showLove && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-md z-50"
+        >
+          <motion.div
+            initial={{ scale: 0.7 }}
+            animate={{ scale: 1 }}
+            className="text-white italic font-semibold"
+            style={{ fontSize: "clamp(34px, 8vw, 64px)" }}
+          >
+            Baby… I love you ❤️
+          </motion.div>
 
-    function startMusicOnce() {
-      if (!musicStarted) {
-        bgMusic.play().catch(()=>{});
-        musicStarted = true;
-      }
-    }
-
-    document.body.addEventListener("click", startMusicOnce);
-    document.body.addEventListener("touchstart", startMusicOnce);
-
-    function moveNoButtonAway(cursorX, cursorY) {
-      const rect = noBtn.getBoundingClientRect();
-
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const dx = centerX - cursorX;
-      const dy = centerY - cursorY;
-
-      const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-
-      const moveX = (dx / distance) * 160;
-      const moveY = (dy / distance) * 160;
-
-      let newLeft = rect.left + moveX;
-      let newTop = rect.top + moveY;
-
-      const maxLeft = window.innerWidth - rect.width;
-      const maxTop = window.innerHeight - rect.height;
-
-      newLeft = Math.max(0, Math.min(maxLeft, newLeft));
-      newTop = Math.max(0, Math.min(maxTop, newTop));
-
-      noBtn.style.left = newLeft + "px";
-      noBtn.style.top = newTop + "px";
-    }
-
-    noBtn.addEventListener("mouseover", (e) => moveNoButtonAway(e.clientX, e.clientY));
-    noBtn.addEventListener("touchstart", (e) => {
-      const t = e.touches[0];
-      moveNoButtonAway(t.clientX, t.clientY);
-    });
-
-    document.addEventListener("mousemove", (e) => {
-      const rect = noBtn.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
-      if (dist < 180) moveNoButtonAway(e.clientX, e.clientY);
-    });
-
-    document.addEventListener("touchmove", (e) => {
-      const touch = e.touches[0];
-      moveNoButtonAway(touch.clientX, touch.clientY);
-    });
-
-    function createHearts() {
-      for (let i = 0; i < 25; i++) {
-        const heart = document.createElement("div");
-        heart.className = "heart";
-        heart.innerHTML = "❤️";
-        heart.style.left = Math.random() * window.innerWidth + "px";
-        heart.style.top = Math.random() * window.innerHeight + "px";
-        heart.style.fontSize = (20 + Math.random() * 40) + "px";
-        document.body.appendChild(heart);
-        setTimeout(() => heart.remove(), 3000);
-      }
-    }
-
-    function createConfetti() {
-      for (let i = 0; i < 40; i++) {
-        const conf = document.createElement("div");
-        conf.className = "heart";
-        conf.innerHTML = "✨";
-        conf.style.left = Math.random() * window.innerWidth + "px";
-        conf.style.top = Math.random() * window.innerHeight + "px";
-        conf.style.fontSize = (12 + Math.random() * 24) + "px";
-        document.body.appendChild(conf);
-        setTimeout(() => conf.remove(), 3000);
-      }
-    }
-
-    function typeLoveMessage(text) {
-      loveMsg.innerHTML = "";
-      loveMsg.style.display = "block";
-      let index = 0;
-      function type() {
-        if (index < text.length) {
-          loveMsg.innerHTML += text.charAt(index);
-          index++;
-          setTimeout(type, 70);
-        }
-      }
-      type();
-    }
-
-    yesBtn.addEventListener("click", () => {
-      yesSound.play().catch(()=>{});
-
-      question.style.display = "none";
-      yesBtn.style.display = "none";
-      noBtn.style.display = "none";
-
-      createHearts();
-      createConfetti();
-
-      typeLoveMessage("Baby… I love you ❤️");
-    });
-  </script>
-</body>
-</html>
+          {/* Confetti + Hearts Burst */}
+          {Array.from({ length: 40 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-pink-400"
+              initial={{
+                x: 0,
+                y: 0,
+                opacity: 1,
+              }}
+              animate={{
+                x: (Math.random() - 0.5) * window.innerWidth,
+                y: (Math.random() - 0.5) * window.innerHeight,
+                opacity: 0,
+              }}
+              transition={{ duration: 2 + Math.random() }}
+              style={{ fontSize: 18 + Math.random() * 26 }}
+            >
+              💖
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </div>
+  );
+}
